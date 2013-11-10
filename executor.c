@@ -11,23 +11,23 @@ int main(){
 	char com[] = "executor";
 
 	do {
-		strcat( com, " I" );
-		perror( com );
+		//strcat( com, " I" );
+		//perror( com );
 
 		if( ( size = read( 0, buf, BUF_SIZE - 1 ) ) == -1 )
 			perror("read");
 
-		strcat( com, "-" );
-		perror( com );
+		//strcat( com, "-" );
+		//perror( com );
 
 		buf [size < BUF_SIZE - 1 ? size : BUF_SIZE - 1] = '\0';
-
+		//perror ( buf );
 		//strcat( buf, " executor" );
 		//write( 1, buf, sizeof(buf)-1 );
 		printf("%s",buf);
 		fflush(stdout);
-		strcat( com, "-" );
-		perror( com );
+		//strcat( com, "-" );
+		//perror( com );
 
 	} while ( strcmp(buf,EXIT) != 0 );
 	//} while ( 0 );

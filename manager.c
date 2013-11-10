@@ -5,7 +5,8 @@
 //#include "err.h"
 
 
-#define BUF_SIZE 1024
+const int BUF_SIZE = 1024;
+const char EXIT[] = "#exit";
 
 void syserr( char* msg ) {
 	perror(msg);
@@ -22,7 +23,7 @@ int main( int argc, const char* argv[] )
 	}
 
 	//char message[] = "2 7 + 3 / 14 3 - 4 * + 2 /";
-	char* message = "  jakis napis z macierzystego.. ";
+	char message[] = "  jakis napis z macierzystego.. ";
 	//char* message = "#exit";
 
 	// tworzymy lacza dla executerow
@@ -54,28 +55,24 @@ int main( int argc, const char* argv[] )
 	}
 
 
-	int tests_no = 2;
+	int tests_no = 10;
 
 	// TODO for -> while
 	// wczytujemy kolejne linie testu i puszczamy je w pierscien
 	//
 	for( i = 0; i < tests_no; i++ ) {
-		if ( i == tests_no - 1 ) message = "#exit";
+		if ( i == tests_no - 1 ) strcpy( message, EXIT );
 		// w managerze nie zastepujemy jego stdin/out. Zna jawnie deskryptory pipe
 		// sluzace do komunikacji z executerami.
 		// manager pisze do pierwszego pipe
+
 		if ( write (pipe_dsc[0][1], message, sizeof(message) - 1) == -1 )
 			syserr("write");
 		// manager czyta z ostatniego pipe
 		char buf[BUF_SIZE];
 
-		printf("macierzysty napisal\n");
-
-
 		if ( ( size = read (pipe_dsc[n-1][0], buf, sizeof(buf) - 1) ) == -1 )
 			syserr("read");
-
-		printf("macierzysty wczytal\n");
 
 		buf [size < BUF_SIZE - 1 ? size : BUF_SIZE - 1] = '\0';
 
