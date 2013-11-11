@@ -1,3 +1,9 @@
+/*
+	Michal Wos mw336071
+	Zadanie zaliczeniowe 1
+	Zarzadca
+*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -23,7 +29,7 @@ int main( int argc, const char* argv[] )
 	}
 
 	//char message[] = "2 7 + 3 / 14 3 - 4 * + 2 /";
-	char message[] = "  jakis napis z macierzystego.. ";
+	char message[] = "#jakis napis z macierzystego.. ";
 	//char* message = "#exit";
 
 	// tworzymy lacza dla executerow
@@ -50,7 +56,7 @@ int main( int argc, const char* argv[] )
 				syserr("Error in execl\n");
 			// w macierzystym
 			default:
-				{syserr("macierzysty");}
+				{}
 		}
 	}
 
@@ -78,8 +84,6 @@ int main( int argc, const char* argv[] )
 
 		printf("%s [koniec]\n",buf);
 	}
-
-
 
 	for ( i = 0; i < n; i++ ) {
 		wait(0);
