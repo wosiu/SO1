@@ -8,19 +8,16 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-//#include "err.h"
-
+#include "err.h"
+#define SYSERR(msg) syserr("%s, line %d: %s:",__FILE__,__LINE__,msg);
 
 const int BUF_SIZE = 1024;
 const char EXIT[] = "#exit";
 
-void syserr( char* msg ) {
-	perror(msg);
-}
 
 int main( int argc, const char* argv[] )
 {
-	int n = 2;
+	int n = 2, size;
 	char* input_path, output_path;
 	if ( argc > 3 ) {
 		n = atoi( argv[1] );
@@ -30,36 +27,69 @@ int main( int argc, const char* argv[] )
 
 	//char message[] = "2 7 + 3 / 14 3 - 4 * + 2 /";
 	char message[] = "#jakis napis z macierzystego.. ";
-	//char* message = "#exit";
 
 	// tworzymy lacza dla executerow
-	n++; //bo manager
-	int pipe_dsc[n][2];
-	int i, size;
-	for ( i = 0; i < n; i++ ) {
-		if (pipe ( pipe_dsc[i] ) == -1) syserr("Error in pipe\n");
-	}
-  	// manager - indeks 0, executerzy [1, n-1]
+	int prince_in_pipe_dsc, prince_out_pipe_dsc;
+	int pipe_dsc[2][2];
+	if (pipe ( pipe_dsc[1] ) == -1) SYSERR("Error in pipe");
+	// zapamietujemy deskryptor zapisywania do pipe, ktory bedzie polaczony
+	// z wejsciem pierwszego wezla
+	prince_in_pipe_dsc = pipe_dsc[1][1];
 
-	//przygotowanie łaczy dla executorow
-	for ( i = 1; i < n; i++ ) {
+	//tworzymy lacza w pierscieniu i uruchamiamy wykonawcow
+	int i;
+	for ( i = 0; i < n; i++ ) {
+
+		// pipe wychodzacy z poprzedniego wezla staje sie wchodzacym do obecnego
+		pipe_dsc[0][0] = pipe_dsc[1][0];
+		pipe_dsc[0][1] = pipe_dsc[1][1];
+		// towrzymy nowy wychodzacy z obecnego wezla pipe
+		if (pipe ( pipe_dsc[1] ) == -1)
+			SYSERR("Cannot create pipe");
+
 		switch( fork() ) {
 			case -1:
-				syserr("Error in fork\n");
+				SYSERR("fork");
 			// w potomku
 			case 0:
-				// zamiast na in, pojdzie na read do pipe
-				if (dup2(pipe_dsc[ (i-1+n) % n ][0], STDIN_FILENO) == -1) syserr("Error in dup! [0]");
-				// cos zamiast isc na out, bedzie szlo na write do pipe
-				if (dup2(pipe_dsc[i][1], STDOUT_FILENO) == -1) syserr("Error in dup! [1]");
+				// zamykam nie uzywane deskryptory:
+				// ten na ktory pisal poprzedni wezel
+				if ( close( pipe_dsc[0][1] ) == -1 )
+					SYSERR("Cannot close pipe descriptor");
+				// ten z ktorego bedzie czytal nastepny wezel
+				if ( close( pipe_dsc[1][0] ) == -1 )
+					SYSERR("Cannot close pipe descriptor");
+
+				// dane zamiast z stdin, przyjda z read z pipe
+				if (dup2(pipe_dsc[0][0], STDIN_FILENO) == -1)
+					SYSERR("Cannot duplicate pipe descriptor");
+				// dane zamiast isc na stdout, bedza szly na write do pipe
+				if (dup2(pipe_dsc[1][1], STDOUT_FILENO) == -1)
+					SYSERR("Cannot duplicate pipe descriptor");
+
 				execl("./executor", "executor", (char *) 0);
-				syserr("Error in execl\n");
+				SYSERR("execl");
 			// w macierzystym
 			default:
-				{}
+			{}
+		}
+
+		// w procesie macierzystym zamykamy lacza stworzone do komunikacji
+		// miedzy wezlami w pierscieniu, poniewaz ich kopie sa w odpowiednich wezlach
+		if ( close( pipe_dsc[0][0] ) == -1 )
+			SYSERR("Cannot close pipe descriptor");
+		// ..oprocz pisania do pierwszego pipe - tam bedzie pisac manager
+		if ( i != 0 ) {
+			if ( close( pipe_dsc[0][1] ) == -1 )
+				SYSERR("Cannot close pipe descriptor");
 		}
 	}
 
+	// musimy jescze zamknac pipe stworzony w ostanim obroie petli
+	if ( close( pipe_dsc[1][1] ) == -1 )
+		SYSERR("Cannot close pipe descriptor");
+	// czytania z pipe nie zamykamy, poniewaz stamtad bedzie czytac manager
+	prince_out_pipe_dsc = pipe_dsc[1][0];
 
 	int tests_no = 10;
 
@@ -72,13 +102,14 @@ int main( int argc, const char* argv[] )
 		// sluzace do komunikacji z executerami.
 		// manager pisze do pierwszego pipe
 
-		if ( write (pipe_dsc[0][1], message, sizeof(message) - 1) == -1 )
-			syserr("write");
+		if ( write (prince_in_pipe_dsc, message, sizeof(message) - 1) == -1 )
+			SYSERR("write");
+
 		// manager czyta z ostatniego pipe
 		char buf[BUF_SIZE];
 
-		if ( ( size = read (pipe_dsc[n-1][0], buf, sizeof(buf) - 1) ) == -1 )
-			syserr("read");
+		if ( ( size = read (prince_out_pipe_dsc, buf, sizeof(buf) - 1) ) == -1 )
+			SYSERR("read");
 
 		buf [size < BUF_SIZE - 1 ? size : BUF_SIZE - 1] = '\0';
 
