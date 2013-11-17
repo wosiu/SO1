@@ -11,31 +11,40 @@
 #include "err.h"
 #define SYSERR(msg) syserr("%s, line %d: %s:",__FILE__,__LINE__,msg);
 
+
 const int BUF_SIZE = 1024;
 const char EXIT[] = "#exit";
-
+char path[256];
+const char data_dir[]="DATA/";
 
 int main( int argc, const char* argv[] )
 {
-	int n = 2, size;
-	char* input_path, output_path;
+	// PARSOWANIE ARGUMENTOW, OTWIERANIE PLIKU Z DANYMI
+	int n = 10, size;
+	FILE *data_input, *data_output;
 	if ( argc > 3 ) {
 		n = atoi( argv[1] );
-		input_path = argv[2];
-		output_path = argv[3];
+
+		strcpy( path, data_dir );
+		if ( data_input = fopen( strcat( path, argv[2] ), "r") == NULL )
+			SYSERR("Cannot open file with input");
+
+		strcpy( path, data_dir );
+		if ( data_output = fopen( strcat( path, argv[3] ), "wb+") == NULL )
+			SYSERR("Cannot open or create file with input");
 	}
 
 	//char message[] = "2 7 + 3 / 14 3 - 4 * + 2 /";
 	char message[] = "#jakis napis z macierzystego.. ";
 
-	// tworzymy lacza dla executerow
+	// TWORZENIE PIERSCIENIA
+
 	int prince_in_pipe_dsc, prince_out_pipe_dsc;
 	int pipe_dsc[2][2];
 	if (pipe ( pipe_dsc[1] ) == -1) SYSERR("Error in pipe");
 	// zapamietujemy deskryptor zapisywania do pipe, ktory bedzie polaczony
 	// z wejsciem pierwszego wezla
 	prince_in_pipe_dsc = pipe_dsc[1][1];
-
 	//tworzymy lacza w pierscieniu i uruchamiamy wykonawcow
 	int i;
 	for ( i = 0; i < n; i++ ) {
@@ -71,17 +80,17 @@ int main( int argc, const char* argv[] )
 				SYSERR("execl");
 			// w macierzystym
 			default:
-			{}
-		}
-
-		// w procesie macierzystym zamykamy lacza stworzone do komunikacji
-		// miedzy wezlami w pierscieniu, poniewaz ich kopie sa w odpowiednich wezlach
-		if ( close( pipe_dsc[0][0] ) == -1 )
-			SYSERR("Cannot close pipe descriptor");
-		// ..oprocz pisania do pierwszego pipe - tam bedzie pisac manager
-		if ( i != 0 ) {
-			if ( close( pipe_dsc[0][1] ) == -1 )
-				SYSERR("Cannot close pipe descriptor");
+			{
+				// w procesie macierzystym zamykamy lacza stworzone do komunikacji
+				// miedzy wezlami w pierscieniu, poniewaz ich kopie sa w odpowiednich wezlach
+				if ( close( pipe_dsc[0][0] ) == -1 )
+					SYSERR("Cannot close pipe descriptor");
+				// ..oprocz pisania do pierwszego pipe - tam bedzie pisac manager
+				if ( i != 0 ) {
+					if ( close( pipe_dsc[0][1] ) == -1 )
+						SYSERR("Cannot close pipe descriptor");
+				}
+			}
 		}
 	}
 
