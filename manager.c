@@ -117,6 +117,8 @@ int main( int argc, const char* argv[] )
 	int onp_in_ring = 0;
 	FILE *prince_out_stream = fdopen( prince_out_pipe_dsc, "r" );
 	FILE *prince_in_stream = fdopen( prince_in_pipe_dsc, "w" );
+	setbuf ( prince_in_stream , NULL );
+	// TODO obsluga errorow fdopen
 
 	while (1) {
 		// pierscien pelen lub koniec pliku z danymi a w pierscieniu jakies dane
@@ -137,7 +139,6 @@ int main( int argc, const char* argv[] )
 				fputs( buf, prince_in_stream );
 				//if ( write (prince_in_pipe_dsc, buf, strlen(buf) - 1) == -1 )
 				//	SYSERR("Cannot rewrite to ring");
-				fflush( prince_in_stream  );
 				onp_in_ring++;
 			}
 
@@ -158,8 +159,6 @@ int main( int argc, const char* argv[] )
 			if( fputs( buf, prince_in_stream ) < 0 )
 			//if ( write (prince_in_pipe_dsc, buf, strlen(buf) ) == -1 )
 				SYSERR("Cannot write to ring data from file");
-
-			fflush( prince_in_stream  );
 			onp_in_ring++;
 		// wszystkie dane obliczone
 			printf("2 if: koniec \n");
@@ -168,7 +167,6 @@ int main( int argc, const char* argv[] )
 			fputs( EXIT, prince_in_stream );
 			//if ( write (prince_in_pipe_dsc, EXIT, strlen(EXIT)) == -1 )
 			//	SYSERR("Cannot write exit command to ring");
-			fflush( prince_in_stream  );
 			printf("wyslano exit\n");
 			break;
 		}
