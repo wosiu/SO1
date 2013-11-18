@@ -118,11 +118,11 @@ int main( int argc, const char* argv[] )
 
 	// ====== WCZYTYWANIE I OBSLUGIWANIE DANYCH ================================
 
-	//wczytywanie liczby testow z pliku
 	int tests_no, tests_it = 0;
 	int onp_in_ring = 0;
 	char buf[ BUF_SIZE ];
 
+	//wczytywanie liczby testow z pliku
 	if ( fscanf( data_input_stream, "%d\n", &tests_no ) == 0 )
 		SYSERR( "Cannot read tests number from file" );
 
@@ -130,9 +130,10 @@ int main( int argc, const char* argv[] )
 		// pierscien pelen lub koniec pliku z danymi a w pierscieniu jakies dane
 		if ( onp_in_ring == n || ( onp_in_ring > 0 && tests_it == tests_no ) ) {
 			onp_in_ring--;
+			// pobieramy wyrazenie onp z pierscienia
 			if ( fgets ( buf, BUF_SIZE, ring_out_stream ) == NULL )
 				SYSERR( "Cannot read data from ring" );
-			// jesli onp jest wyliczone, zapisujemy do pliku
+			// jesli wyrazenie te jest wyliczone, zapisujemy wynik do pliku
 			if ( is_ready( buf ) ) {
 				fputs( buf, data_output_stream );
 			// w przeciwnym razie wkladamy spowrotem do pierscienia
@@ -144,12 +145,13 @@ int main( int argc, const char* argv[] )
 		// w pierscieniu wolne miejsce na dane a w pliku sa dane
 		} else if ( tests_it < tests_no ) {
 			tests_it++;
-			snprintf( buf, BUF_SIZE,"%d: ",tests_it );
+			// dodajemy prefiks z numerem wiersza
+			snprintf( buf, BUF_SIZE, "%d: ", tests_it );
 			int len = strlen( buf );
-			// czytamy z pliku kolejny test i dodajemy go do bufora
+			// czytamy z pliku kolejny test
 			if ( fgets ( buf + len, BUF_SIZE - len, data_input_stream ) == NULL )
 				SYSERR( "Cannot read data from file" );
-			// wkladamy do pierscienia
+			// wkladamy go do pierscienia
 			if ( fputs( buf, ring_in_stream ) < 0 )
 				SYSERR( "Cannot write to ring data from file" );
 			onp_in_ring++;
@@ -159,6 +161,7 @@ int main( int argc, const char* argv[] )
 		}
 	}
 
+	// wysylamy do wykonawcow informacje o zakonczeniu
 	if ( fputs( EXIT, ring_in_stream ) < 0 )
 		SYSERR( "Cannot write exit command to ring" );
 
