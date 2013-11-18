@@ -1,7 +1,9 @@
 #ifndef _ERR_
 #define _ERR_
 
-/* wypisuje informacje o blednym zakonczeniu funkcji systemowej 
+#define SYSERR(msg) syserr("%s, line %d: %s:", __FILE__, __LINE__, msg);
+
+/* wypisuje informacje o blednym zakonczeniu funkcji systemowej
 i konczy dzialanie */
 extern void syserr(const char *fmt, ...);
 
