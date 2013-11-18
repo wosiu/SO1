@@ -115,15 +115,16 @@ int main( int argc, const char* argv[] )
 		SYSERR("Cannot read tests number from file");
 
 	int onp_in_ring = 0;
-	FILE *stream;
-	stream = fdopen (prince_out_pipe_dsc, "r");
+	FILE *prince_out_stream = fdopen( prince_out_pipe_dsc, "r" );
+	FILE *prince_in_stream = fdopen( prince_in_pipe_dsc, "w" );
+
 	while (1) {
 		// pierscien pelen lub koniec pliku z danymi a w pierscieniu jakies dane
 		if ( onp_in_ring == n || ( onp_in_ring > 0 && tests_it == tests_no ) ) {
 			onp_in_ring--;
 
 			printf("1 if: start\n");
-			fgets ( buf, BUF_SIZE, stream );
+			fgets ( buf, BUF_SIZE, prince_out_stream );
 			printf("1 if: wczytal: %s", buf);
 
 			// jesli onp jest wyliczone, zapisujemy do pliku
@@ -132,7 +133,7 @@ int main( int argc, const char* argv[] )
 				fflush(data_output);
 			// w przeciwnym razie wkladamy spowrotem do pierscienia
 			} else {
-				if ( write (prince_in_pipe_dsc, buf, sizeof(buf) - 1) == -1 )
+				if ( write (prince_in_pipe_dsc, buf, strlen(buf) - 1) == -1 )
 					SYSERR("Cannot rewrite to ring");
 				onp_in_ring++;
 			}
