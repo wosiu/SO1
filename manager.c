@@ -122,18 +122,8 @@ int main( int argc, const char* argv[] )
 		// pierscien pelen lub koniec pliku z danymi a w pierscieniu jakies dane
 		if ( onp_in_ring == n || ( onp_in_ring > 0 && tests_it == tests_no ) ) {
 			onp_in_ring--;
-			// czytamy wyrazenie onp z pipe
-			/*if ( ( size = read (prince_out_pipe_dsc, buf, sizeof(buf) - 1) ) == -1 )
-				SYSERR("Cannot read from ring");
-			buf [size < BUF_SIZE - 1 ? size : BUF_SIZE - 1] = '\0';*/
 
 			fgets ( buf, BUF_SIZE, stream );
-
-			//char *line = NULL;
-			/*size_t Size;
-			char* buff = NULL;
-			if ( getline( &buff, &Size, prince_out_pipe_dsc ) == -1)
-			    printf("No line\n");*/
 
 			// jesli onp jest wyliczone, zapisujemy do pliku
 			if ( is_ready( buf ) ) {
@@ -167,26 +157,6 @@ int main( int argc, const char* argv[] )
 				SYSERR("Cannot write exit command to ring");
 			break;
 		}
-
-		/*
-		if ( i == tests_no - 1 ) strcpy( message, EXIT );
-		// w managerze nie zastepujemy jego stdin/out. Zna jawnie deskryptory pipe
-		// sluzace do komunikacji z executerami.
-		// manager pisze do pierwszego pipe
-
-		if ( write (prince_in_pipe_dsc, message, sizeof(message) - 1) == -1 )
-			SYSERR("write");
-
-		// manager czyta z ostatniego pipe
-		char buf[BUF_SIZE];
-
-		if ( ( size = read (prince_out_pipe_dsc, buf, sizeof(buf) - 1) ) == -1 )
-			SYSERR("read");
-
-		buf [size < BUF_SIZE - 1 ? size : BUF_SIZE - 1] = '\0';
-
-		printf("%s [koniec]\n",buf);
-		*/
 	}
 
 	for ( i = 0; i < n; i++ ) {
