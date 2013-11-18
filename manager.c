@@ -10,11 +10,9 @@
 #include <sys/wait.h>
 #include "err.h"
 #define SYSERR(msg) syserr("%s, line %d: %s:", __FILE__, __LINE__, msg);
-#define BUF_SIZE 16384
 
-char buf[ BUF_SIZE ];
+const int BUF_SIZE = 16384;
 const char EXIT[] = "#exit\n";
-char path[256];
 const char data_dir[]="DATA/";
 
 
@@ -27,19 +25,19 @@ int main( int argc, const char* argv[] )
 {
 	// PARSOWANIE ARGUMENTOW, OTWIERANIE PLIKU Z DANYMI
 
-	int n = 10, size;
-	FILE *data_input;
-	FILE *data_output;
+	int n;
+	char path[256];
+	FILE *data_input_stream, *data_output_stream, *ring_out_stream, *ring_in_stream;
 
 	if ( argc == 4 ) {
 		n = atoi( argv[1] );
 
 		strcpy( path, data_dir );
-		if ( ( data_input = fopen( strcat( path, argv[2] ), "r") ) == NULL )
+		if ( ( data_input_stream = fopen( strcat( path, argv[2] ), "r") ) == NULL )
 			SYSERR("Cannot open file with input");
 
 		strcpy( path, data_dir );
-		if ( ( data_output = fopen( strcat( path, argv[3] ), "wb+") ) == NULL )
+		if ( ( data_output_stream = fopen( strcat( path, argv[3] ), "wb+") ) == NULL )
 			SYSERR("Cannot open or create file with input");
 	} else {
 		SYSERR("Incorrect number of arguments");
@@ -48,12 +46,12 @@ int main( int argc, const char* argv[] )
 
 	// TWORZENIE PIERSCIENIA
 
-	int prince_in_pipe_dsc, prince_out_pipe_dsc;
+	int ring_in_pipe_dsc, ring_out_pipe_dsc;
 	int pipe_dsc[2][2];
 	if (pipe ( pipe_dsc[1] ) == -1) SYSERR("Error in pipe");
 	// zapamietujemy deskryptor zapisywania do pipe, ktory bedzie polaczony
 	// z wejsciem pierwszego wezla
-	prince_in_pipe_dsc = pipe_dsc[1][1];
+	ring_in_pipe_dsc = pipe_dsc[1][1];
 
 	int i;
 	for ( i = 0; i < n; i++ ) {
@@ -104,78 +102,64 @@ int main( int argc, const char* argv[] )
 	if ( close( pipe_dsc[1][1] ) == -1 )
 		SYSERR("Cannot close pipe descriptor");
 	// czytania z pipe nie zamykamy, poniewaz stamtad bedzie czytac manager
-	prince_out_pipe_dsc = pipe_dsc[1][0];
+	ring_out_pipe_dsc = pipe_dsc[1][0];
 
 
 	// WCZYTYWANIE I OBSLUGIWANIE DANYCH
 
 	//wczytywanie liczby testow z pliku
 	int tests_no, tests_it = 0;
-	if ( fscanf(data_input, "%d\n", &tests_no) == 0 )
+	int onp_in_ring = 0;
+	char buf[ BUF_SIZE ];
+
+	if ( fscanf(data_input_stream, "%d\n", &tests_no) == 0 )
 		SYSERR("Cannot read tests number from file");
 
-	int onp_in_ring = 0;
-	FILE *prince_out_stream = fdopen( prince_out_pipe_dsc, "r" );
-	FILE *prince_in_stream = fdopen( prince_in_pipe_dsc, "w" );
-	setbuf ( prince_in_stream , NULL );
-	// TODO obsluga errorow fdopen
+	if ( ( ring_out_stream = fdopen( ring_out_pipe_dsc, "r" ) ) == NULL )
+		SYSERR("Cannot open stream from ring out descriptor");
+	if ( ( ring_in_stream = fdopen( ring_in_pipe_dsc, "w" ) )  == NULL )
+		SYSERR("Cannot open stream from ring in descriptor");
+	setbuf ( ring_in_stream , NULL );
 
 	while (1) {
 		// pierscien pelen lub koniec pliku z danymi a w pierscieniu jakies dane
 		if ( onp_in_ring == n || ( onp_in_ring > 0 && tests_it == tests_no ) ) {
 			onp_in_ring--;
-
-			printf("1 if: start\n");
-			fgets ( buf, BUF_SIZE, prince_out_stream );
-			printf("1 if: wczytal: %s", buf);
-
+			if ( fgets ( buf, BUF_SIZE, ring_out_stream ) == NULL )
+				SYSERR("Cannot read data from ring");
 			// jesli onp jest wyliczone, zapisujemy do pliku
 			if ( is_ready( buf ) ) {
-				//fprintf(data_output,"%s",buf);
-				fputs( buf, data_output );
-				//fflush(data_output);
+				fputs( buf, data_output_stream );
 			// w przeciwnym razie wkladamy spowrotem do pierscienia
 			} else {
-				fputs( buf, prince_in_stream );
-				//if ( write (prince_in_pipe_dsc, buf, strlen(buf) - 1) == -1 )
-				//	SYSERR("Cannot rewrite to ring");
+				if ( fputs( buf, ring_in_stream ) < 0 )
+					SYSERR("Cannot rewrite to ring");
 				onp_in_ring++;
 			}
-
-			printf("1 if: end \n");
 		// w pierscieniu wolne miejsce na dane a w pliku sa dane
 		} else if ( tests_it < tests_no ) {
-			printf("2 if: start\n");
 			tests_it++;
-			// zapisujemy do bufora numer testu
 			snprintf(buf, BUF_SIZE,"%d: ",tests_it);
 			int len = strlen(buf);
 			// czytamy z pliku kolejny test i dodajemy go do bufora
-			if ( fgets (buf + len, BUF_SIZE - len, data_input) == NULL )
+			if ( fgets (buf + len, BUF_SIZE - len, data_input_stream) == NULL )
 				SYSERR("Cannot read data from file");
 			// wkladamy do pierscienia
-			printf("2 if: %s", buf);
-			printf("Wysylam wyrazenie do pierscienia: %s\n", buf);
-			if( fputs( buf, prince_in_stream ) < 0 )
-			//if ( write (prince_in_pipe_dsc, buf, strlen(buf) ) == -1 )
+			if( fputs( buf, ring_in_stream ) < 0 )
 				SYSERR("Cannot write to ring data from file");
 			onp_in_ring++;
 		// wszystkie dane obliczone
-			printf("2 if: koniec \n");
 		} else {
-			printf("THE END\n");
-			fputs( EXIT, prince_in_stream );
-			//if ( write (prince_in_pipe_dsc, EXIT, strlen(EXIT)) == -1 )
-			//	SYSERR("Cannot write exit command to ring");
-			printf("wyslano exit\n");
+			if ( fputs( EXIT, ring_in_stream ) < 0 )
+				SYSERR("Cannot write exit command to ring");
 			break;
 		}
 	}
 
-	//TODO file close
 	for ( i = 0; i < n; i++ ) {
 		wait(0);
 	}
-
+	fclose( ring_in_stream );
+	fclose( ring_out_stream );
 	return 0;
 }
