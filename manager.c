@@ -5,9 +5,10 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-//#include <sys/types.h>
-//#include <sys/wait.h>
+#include <sys/wait.h>
 #include "err.h"
 
 const int BUF_SIZE = 16384;
@@ -88,8 +89,9 @@ int main( int argc, const char* argv[] )
 			// w macierzystym
 			default:
 			{
-				// w procesie macierzystym zamykamy lacza stworzone do komunikacji
-				// miedzy wezlami w pierscieniu, poniewaz ich kopie sa w odpowiednich wezlach
+				// w procesie macierzystym zamykamy lacza stworzone do
+				// komunikacji miedzy wezlami w pierscieniu, poniewaz ich kopie
+				// sa w odpowiednich wezlach
 				if ( close( pipe_dsc[0][0] ) == -1 )
 					SYSERR( "Cannot close pipe descriptor" );
 				// ..oprocz pisania do pierwszego pipe - tam bedzie pisac manager
@@ -153,11 +155,12 @@ int main( int argc, const char* argv[] )
 			onp_in_ring++;
 		// wszystkie dane obliczone
 		} else {
-			if ( fputs( EXIT, ring_in_stream ) < 0 )
-				SYSERR( "Cannot write exit command to ring" );
 			break;
 		}
 	}
+
+	if ( fputs( EXIT, ring_in_stream ) < 0 )
+		SYSERR( "Cannot write exit command to ring" );
 
 	for ( i = 0; i < n; i++ ) {
 		wait( 0 );

@@ -5,6 +5,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include "err.h"
 
 const int BUF_SIZE = 16384;
@@ -21,7 +22,7 @@ char* calculate( char *input )
 
 	// tutaj onp
 	strcpy( res, input );
-	return res;
+	return input;
 }
 
 int main(){
