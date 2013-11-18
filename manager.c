@@ -9,12 +9,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "err.h"
-#define SYSERR(msg) syserr("%s, line %d: %s:",__FILE__,__LINE__,msg);
+#define SYSERR(msg) syserr("%s, line %d: %s:", __FILE__, __LINE__, msg);
+#define BUF_SIZE 16384
 
-
-#define BUF_SIZE 1024
 char buf[ BUF_SIZE ];
-const char EXIT[] = "#exit";
+const char EXIT[] = "#exit\n";
 char path[256];
 const char data_dir[]="DATA/";
 
@@ -123,11 +122,14 @@ int main( int argc, const char* argv[] )
 		if ( onp_in_ring == n || ( onp_in_ring > 0 && tests_it == tests_no ) ) {
 			onp_in_ring--;
 
+			printf("1 if: start\n");
 			fgets ( buf, BUF_SIZE, stream );
+			printf("1 if: wczytal: %s", buf);
 
 			// jesli onp jest wyliczone, zapisujemy do pliku
 			if ( is_ready( buf ) ) {
 				fprintf(data_output,"%s",buf);
+				fflush(data_output);
 			// w przeciwnym razie wkladamy spowrotem do pierscienia
 			} else {
 				if ( write (prince_in_pipe_dsc, buf, sizeof(buf) - 1) == -1 )
@@ -135,9 +137,10 @@ int main( int argc, const char* argv[] )
 				onp_in_ring++;
 			}
 
-			printf("1 if: %s\n", buf);
+			printf("1 if: end \n");
 		// w pierscieniu wolne miejsce na dane a w pliku sa dane
 		} else if ( tests_it < tests_no ) {
+			printf("2 if: start\n");
 			tests_it++;
 			// zapisujemy do bufora numer testu
 			snprintf(buf, BUF_SIZE,"%d: ",tests_it);
@@ -146,15 +149,19 @@ int main( int argc, const char* argv[] )
 			if ( fgets (buf + len, BUF_SIZE - len, data_input) == NULL )
 				SYSERR("Cannot read data from file");
 			// wkladamy do pierscienia
-			if ( write (prince_in_pipe_dsc, buf, sizeof(buf) - 1) == -1 )
+			printf("2 if: %s", buf);
+			printf("Wysylam wyrazenie do pierscienia: %s\n", buf);
+			if ( write (prince_in_pipe_dsc, buf, strlen(buf) ) == -1 )
 				SYSERR("Cannot write to ring data from file");
 			onp_in_ring++;
 		// wszystkie dane obliczone
-			printf("2 if: %s\n", buf);
+			printf("2 if: koniec \n");
 		} else {
 			printf("THE END\n");
-			if ( write (prince_in_pipe_dsc, EXIT, sizeof(EXIT) - 1) == -1 )
+			if ( write (prince_in_pipe_dsc, EXIT, strlen(EXIT)) == -1 )
 				SYSERR("Cannot write exit command to ring");
+
+			printf("wyslano exit\n");
 			break;
 		}
 	}
