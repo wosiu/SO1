@@ -129,12 +129,15 @@ int main( int argc, const char* argv[] )
 
 			// jesli onp jest wyliczone, zapisujemy do pliku
 			if ( is_ready( buf ) ) {
-				fprintf(data_output,"%s",buf);
-				fflush(data_output);
+				//fprintf(data_output,"%s",buf);
+				fputs( buf, data_output );
+				//fflush(data_output);
 			// w przeciwnym razie wkladamy spowrotem do pierscienia
 			} else {
-				if ( write (prince_in_pipe_dsc, buf, strlen(buf) - 1) == -1 )
-					SYSERR("Cannot rewrite to ring");
+				fputs( buf, prince_in_stream );
+				//if ( write (prince_in_pipe_dsc, buf, strlen(buf) - 1) == -1 )
+				//	SYSERR("Cannot rewrite to ring");
+				fflush( prince_in_stream  );
 				onp_in_ring++;
 			}
 
@@ -152,21 +155,26 @@ int main( int argc, const char* argv[] )
 			// wkladamy do pierscienia
 			printf("2 if: %s", buf);
 			printf("Wysylam wyrazenie do pierscienia: %s\n", buf);
-			if ( write (prince_in_pipe_dsc, buf, strlen(buf) ) == -1 )
+			if( fputs( buf, prince_in_stream ) < 0 )
+			//if ( write (prince_in_pipe_dsc, buf, strlen(buf) ) == -1 )
 				SYSERR("Cannot write to ring data from file");
+
+			fflush( prince_in_stream  );
 			onp_in_ring++;
 		// wszystkie dane obliczone
 			printf("2 if: koniec \n");
 		} else {
 			printf("THE END\n");
-			if ( write (prince_in_pipe_dsc, EXIT, strlen(EXIT)) == -1 )
-				SYSERR("Cannot write exit command to ring");
-
+			fputs( EXIT, prince_in_stream );
+			//if ( write (prince_in_pipe_dsc, EXIT, strlen(EXIT)) == -1 )
+			//	SYSERR("Cannot write exit command to ring");
+			fflush( prince_in_stream  );
 			printf("wyslano exit\n");
 			break;
 		}
 	}
 
+	//TODO file close
 	for ( i = 0; i < n; i++ ) {
 		wait(0);
 	}
