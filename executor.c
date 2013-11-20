@@ -39,8 +39,6 @@ void calculate( char* onp )
 {
 	int onp_l = strlen(onp);
 
-	//printf("len %d\n", onp_l);
-
 	int onp_it = 0;
 	int i;
 
@@ -54,16 +52,12 @@ void calculate( char* onp )
 			break;
 		}
 	}
-	//printf("onp_it: %d\n",onp_it);
-	//printf("przepisany numer lini: %s|\n", res );
 
 	if ( onp_it == onp_l ) {
 		SYSERR( "Incorrect format of onp line - no line number")
 	}
 
 	res[ ++onp_it] = ' ';
-
-	//printf("dodana spacja: %s|\n", res );
 
 	// szukamy pierwszego operatora arytmetycznego,
 	// jego polozenie pamietamy w zmiennej op
@@ -83,9 +77,6 @@ void calculate( char* onp )
 		}
 		op++;
 	}
-
-	//printf("sp1:%d, sp2:%d, sp3:%d. op:%d\n",space[0],space[1],space[2],op);
-	//printf( "onp size: %d\n", onp_l );
 
 	// przepisujemy prefix wyrazenia, ktory nie ulegnie zmianie
 	for	( ; onp_it <= space[0]; onp_it++ ) {
@@ -124,9 +115,6 @@ void calculate( char* onp )
 		b = b * 10 + (int)onp[onp_it] - (int)'0';
 	}
 	b *= bn;
-
-	//printf("operator: %c\n", onp[op] );
-	assert( onp_it == op - 1 );
 
 	// wykonujemy dzialanie zgodne z operatorem
 	switch ( onp[op] ) {
