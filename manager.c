@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 #include "err.h"
 
-const int BUF_SIZE = 16384;
+const int BUF_SIZE = 4096;
 const char EXIT[] = "#exit\n";
 const char data_dir[]="DATA/";
 
@@ -114,7 +114,7 @@ int main( int argc, const char* argv[] )
 	if ( ( ring_in_stream = fdopen( ring_in_pipe_dsc, "w" ) )  == NULL )
 		SYSERR( "Cannot open stream from ring in descriptor" );
 	setbuf ( ring_in_stream , NULL );
-
+	setbuf ( data_output_stream, NULL );
 
 	// ====== WCZYTYWANIE I OBSLUGIWANIE DANYCH ================================
 
@@ -133,8 +133,16 @@ int main( int argc, const char* argv[] )
 			// pobieramy wyrazenie onp z pierscienia
 			if ( fgets ( buf, BUF_SIZE, ring_out_stream ) == NULL )
 				SYSERR( "Cannot read data from ring" );
+			// napotkano blad bo komunikat zakonczenia nadszedl zbyt wczesnie
+			// (przed wyslanie z manadzera do pierscienia)
+			if ( strcmp ( buf, EXIT ) == 0 ) {
+				// wysylamy komunikat zakonczenia do pierscienia
+				if ( fputs( EXIT, ring_in_stream ) < 0 )
+					SYSERR( "Cannot send exit task to ring" );
+				break;
+			}
 			// jesli wyrazenie te jest wyliczone, zapisujemy wynik do pliku
-			if ( is_ready( buf ) ) {
+			else if ( is_ready( buf ) ) {
 				fputs( buf, data_output_stream );
 			// w przeciwnym razie wkladamy spowrotem do pierscienia
 			} else {
