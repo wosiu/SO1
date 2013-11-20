@@ -38,7 +38,6 @@ int main(){
 void calculate( char* onp )
 {
 	int onp_l = strlen(onp);
-
 	int onp_it = 0;
 	int i;
 
@@ -51,10 +50,6 @@ void calculate( char* onp )
 		if ( onp[onp_it] == ':' ) {
 			break;
 		}
-	}
-
-	if ( onp_it == onp_l ) {
-		SYSERR( "Incorrect format of onp line - no line number")
 	}
 
 	res[ ++onp_it] = ' ';
@@ -122,7 +117,6 @@ void calculate( char* onp )
 		case '-': w = a - b; break;
 		case '*': w = a * b; break;
 		case '/': w = a / b; break;
-		default: SYSERR( "Unrecognised operator" );
 	}
 
 	// dopisujemy obliczona liczbe do ciagu wynikowego

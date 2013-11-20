@@ -13,6 +13,25 @@
 #include "commons.h"
 
 const char data_dir[]="DATA/";
+FILE *data_input_stream, *data_output_stream, *ring_out_stream, *ring_in_stream;
+
+void closeStreams()
+{
+	if ( data_input_stream != NULL ) {
+		fclose( data_input_stream );
+	}
+	if ( data_output_stream != NULL ) {
+		fclose( data_output_stream );
+	}
+	if ( ring_in_stream != NULL ) {
+		fclose( ring_in_stream );
+	}
+	if ( ring_out_stream != NULL ) {
+		fclose( ring_out_stream );
+	}
+}
+
+#define SYSERR(msg) { closeStreams(); syserr("%s, line %d: %s:", __FILE__, __LINE__, msg); }
 
 int main( int argc, const char* argv[] )
 {
@@ -20,8 +39,7 @@ int main( int argc, const char* argv[] )
 
 	int n;
 	char path[256];
-	FILE *data_input_stream, *data_output_stream, *ring_out_stream,
-		*ring_in_stream;
+
 
 	if ( argc == 4 ) {
 		n = atoi( argv[1] );
@@ -169,9 +187,11 @@ int main( int argc, const char* argv[] )
 	for ( i = 0; i < n; i++ ) {
 		wait( 0 );
 	}
-	fclose( ring_in_stream );
-	fclose( ring_out_stream );
+
 	fclose( data_input_stream );
 	fclose( data_output_stream );
+	fclose( ring_in_stream );
+	fclose( ring_out_stream );
+
 	return 0;
 }
