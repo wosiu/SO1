@@ -32,6 +32,42 @@ int is_operator( char* onp, int op )
 	return 1;
 }
 
+int is_ready( char *onp )
+{
+	int i = 0;
+	for ( ; i < strlen( onp ); i++ ) {
+		switch ( onp[i] ) {
+			case '+': return 0;
+			case '-': if ( is_operator( onp, i ) ) return 0; break;
+			case '*': return 0;
+			case '/': return 0;
+		}
+	}
+	return 1;
+}
+
+void calculate( char* onp );
+
+int main(){
+	char buf[BUF_SIZE];
+
+	while ( 1 ) {
+		if ( fgets ( buf, BUF_SIZE, stdin ) == NULL )
+			syserr( "Cannot read data from stdin" );
+
+		if( strcmp( buf, EXIT ) == 0 ) {
+			printf( "%s", buf );
+			return 0;
+		}
+		// robienie ONP i wypisanie
+		calculate( buf );
+		printf( "%s", res );
+		fflush( stdout );
+	};
+	return 0;
+}
+
+
 void calculate( char* onp )
 {
 	int onp_l = strlen(onp);
@@ -149,25 +185,4 @@ void calculate( char* onp )
 	for ( ; onp_it < onp_l; onp_it++ ) {
 		res[ res_it++ ] = onp[ onp_it ];
 	}
-}
-
-
-
-int main(){
-	char buf[BUF_SIZE];
-
-	while ( 1 ) {
-		if ( fgets ( buf, BUF_SIZE, stdin ) == NULL )
-			syserr( "Cannot read data from stdin" );
-
-		if( strcmp( buf, EXIT ) == 0 ) {
-			printf( "%s", buf );
-			return 0;
-		}
-		// robienie ONP i wypisanie
-		calculate( buf );
-		printf( "%s", res );
-		fflush( stdout );
-	};
-	return 0;
 }
