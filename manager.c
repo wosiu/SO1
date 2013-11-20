@@ -171,5 +171,7 @@ int main( int argc, const char* argv[] )
 	}
 	fclose( ring_in_stream );
 	fclose( ring_out_stream );
+	fclose( data_input_stream );
+	fclose( data_output_stream );
 	return 0;
 }

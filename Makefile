@@ -10,7 +10,7 @@ err.o: err.c err.h
 	cc -Wall -c err.c -o err.o
 
 commons.o: commons.c commons.h
-	cc -Wall -c commons.c -o commons.o
+	cc -g -ggdb -Wall -c commons.c -o commons.o
 
 clean:
 	rm -f *.o manager executor
