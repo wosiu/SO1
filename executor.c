@@ -10,42 +10,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "err.h"
+#include "commons.h"
 
-const int BUF_SIZE = 4096;
-const char EXIT[] = "#exit\n";
-
-char res[ 4096 ];
-
-int is_operator( char* onp, int op )
-{
-	int onp_l = strlen( onp );
-	// sprawdzamy czy to operator uwzgledniajac potencjalny minus przy liczbie
-	if ( isdigit( onp[op] ) ) {
-		return 0;
-	}
-	if ( isspace( onp[op] ) ) {
-		return 0;
-	}
-	if ( op + 1 < onp_l && onp[op]=='-' && isdigit( onp[op + 1] ) ) {
-		return 0;
-	}
-	return 1;
-}
-
-int is_ready( char *onp )
-{
-	int i = 0;
-	for ( ; i < strlen( onp ); i++ ) {
-		switch ( onp[i] ) {
-			case '+': return 0;
-			case '-': if ( is_operator( onp, i ) ) return 0; break;
-			case '*': return 0;
-			case '/': return 0;
-		}
-	}
-	return 1;
-}
-
+char res[ BUF_SIZE ];
 void calculate( char* onp );
 
 int main(){
@@ -98,7 +65,6 @@ void calculate( char* onp )
 
 	//printf("dodana spacja: %s|\n", res );
 
-
 	// szukamy pierwszego operatora arytmetycznego,
 	// jego polozenie pamietamy w zmiennej op
 	// zapamietujemy takze polozenie 3 ostatnich spacji przed nim
@@ -112,7 +78,6 @@ void calculate( char* onp )
 			space[0] = space[1];
 			space[1] = space[2];
 			space[2] = op;
-		//TODO: sprawdzic czy sie nie wychrzania na "\n"
 		} else if ( is_operator( onp, op ) ) {
 			break;
 		}

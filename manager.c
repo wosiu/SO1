@@ -10,16 +10,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "err.h"
+#include "commons.h"
 
-const int BUF_SIZE = 4096;
-const char EXIT[] = "#exit\n";
 const char data_dir[]="DATA/";
-
-
-int is_ready( char* onp )
-{
-	return 1;
-}
 
 int main( int argc, const char* argv[] )
 {
